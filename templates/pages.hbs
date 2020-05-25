@@ -1,0 +1,47 @@
+<section class="template--section section--pages">
+	<ul>
+	{{ #each page }}
+		<li>{{ this }}</li>
+	{{ /each }}
+	</ul>
+</section>
+{{!--
+schema {
+	type: 'array',
+	'$schema': 'http://json-schema.org/draft-04/schema#',
+	description: '',
+	minItems: 1,
+	uniqueItems: true,
+	items: {
+		type: 'object',
+		required: [
+		  'startedDateTime',
+		  'time',
+		  'request',
+		  'response',
+		  'cache',
+		  'timings',
+		  'serverIPAddress',
+		  '_initiator',
+		  '_priority',
+		  '_resourceType',
+		  'connection',
+		  'pageref'
+		],
+		properties: {
+		  startedDateTime: [Object],
+		  time: [Object],
+		  request: [Object],
+		  response: [Object],
+		  cache: [Object],
+		  timings: [Object],
+		  serverIPAddress: [Object],
+		  _initiator: [Object],
+		  _priority: [Object],
+		  _resourceType: [Object],
+		  connection: [Object],
+		  pageref: [Object]
+		}
+	}
+}
+--}}
