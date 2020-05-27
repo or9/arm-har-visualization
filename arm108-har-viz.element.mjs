@@ -1,13 +1,34 @@
+// import * as Chart from "./node_modules/chart.js/dist/Chart.bundle.js";
+// import * as Chart from "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js";
+// create libs directory
+// rollup chart.js
+// import * as Chart from "./lib/chart.js/Chart.js";
+
 export default class ArmHarViz extends HTMLElement {
 	constructor () {
 		super();
 
-		this.attachShadow({ mode: "open" })
-			appendChild(this.constructor.template.content.cloneNode(true));
+		this.constructor.observedAttributes.forEach((attr) => {
+			this[attr] = this.getAttribute(attr) || this.constructor[`default_${attr}`];
+		});
+
+		this.attachShadow({ mode: "open" });
+		this.shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 	}
 
 	connectedCallback () {
 		console.log("#connectedCallback");
+		// this.ctx = this.shadowRoot.getElementById(this.constructor.id).getContext(`2d`);
+		this.ctx = this.shadowRoot.getElementById(this.constructor.id);
+
+		// insert data or load from URL
+		this.chart = new window.Chart(this.ctx, {
+			type: this.type,
+			data: this.data,
+			options: this.options
+		});
+
+		console.log("so this.chart???", this.chart);
 	}
 
 	adoptedCallback () {
@@ -15,185 +36,105 @@ export default class ArmHarViz extends HTMLElement {
 	}
 
 	attributeChangedCallback (name, oldValue, newValue) {
-		console.log("#attributeChangedCallback");
+		console.log("#attributeChangedCallback", name, newValue);
+		// Reflect observed attributes to properties
+		this[name] = newValue;
 	}
 
 	disconnectedCallback () {
 		console.log("#disconnectedCallback");
+		this.ctx = null;
+	}
+
+	static get id () {
+		return `armVizCanvas`;
 	}
 
 	static get observedAttributes () {
-		// return [
-			// `attr1`,
-			// `attr2`
-		// ];
+		return [
+			`width`,
+			`height`,
+			`type`,
+			`data`,
+			`options`,
+		];
+	}
+
+	static get default_type () {
+		return "bar";
+	}
+
+	static get default_data () {
+		return {
+			labels: [
+				"default data 1",
+				"default data 2",
+				"default data 3",
+			],
+			datasets: [
+				{
+					label: "DEFAULT LABEL",
+					data: [10, 20, 3],
+					backgroundColor: [
+						"rgba(128, 128, 128, 0.5)",
+						"rgba(136, 136, 136, 0.5)",
+						"rgba(144, 144, 144, 0.5)",
+					],
+					borderColor: [
+						"rgba(136, 136, 136, 0.5)",
+						"rgba(128, 128, 128, 0.5)",
+						"rgba(128, 128, 128, 0.5)",
+					],
+					borderWidth: 1,
+				}
+			]
+		};
+	}
+
+	static get default_options () {
+		return {
+			responsive: true,
+			maintainAspectRatio: true,
+			legend: {
+				display: true,
+			},
+			tooltips: {
+				enabled: true,
+			},
+			scales: {
+				yAxes: [
+					{
+						ticks: {
+							beginAtZero: true
+						}
+					}
+				]
+			}
+		};
+	}
+
+	static get default_height () {
+		return 100;
+	}
+
+	static get default_width () {
+		return 250;
 	}
 
 	static get template () {
+		// ${this} is constructor in context
 		const tmpl = document.createElement(`template`);
 		tmpl.innerHTML = /* html */`
-		<!--
-		schema {
-			'$schema': 'http://json-schema.org/draft-04/schema#',
-			description: '',
-			type: 'object',
-			properties: {
-				version: {
-					type: 'string',
-					minLength: 1
-				},
-				creator: {
-					type: 'object',
-					properties: {
-						name: { type: 'string', minLength: 1 },
-						version: { type: 'string', minLength: 1 }
-					},
-					required: [ 'name', 'version' ]
-				},
-				pages: { type: 'array', uniqueItems: true, minItems: 1, items: [Object] },
-				entries: { type: 'array', uniqueItems: true, minItems: 1, items: [Object] }
-			},
-			required: [ 'version', 'creator', ... ]
-		}
-		-->
-		<p class="template--section section--meta">
-			<span class="version"><code>{{ version }}</code></span>
-			<span class="creator">{{ creator.name }} <code>{{ creator.version }}</code></span>
-		</p>
-
-		<!--
-		schema {
-			type: 'array',
-			'$schema': 'http://json-schema.org/draft-04/schema#',
-			description: '',
-			minItems: 1,
-			uniqueItems: true,
-			items: {
-				type: 'object',
-				properties: {
-					startedDateTime: [Object],
-					time: [Object],
-					request: [Object],
-					response: [Object],
-					cache: [Object],
-					timings: [Object],
-					serverIPAddress: [Object],
-					_initiator: [Object],
-					_priority: [Object],
-					_resourceType: [Object],
-					connection: [Object],
-					pageref: [Object]
-				}
+		<!-- <link rel="stylesheet" type="text/css" href="./node_modules/chart.js/dist/Chart.min.css"> -->
+		<style type="text/css">
+			@import "./node_modules/chart.js/dist/Chart.min.css";
+			:host {
+				contain: content;
+				display: inline-flex;
 			}
-		}
-		-->
-		<section class="template--section section--pages">
-			<ul>
-			{{#each pages}}
-				<li>
-					<ul>
-						<li><label>startedDateTime: </label><code>{{ this.startedDateTime }}</code></li>
-						<li><label>time: </label><code>{{ this.time }}</code></li>
-						<li><label>request: </label><code>{{ this.request }}</code></li>
-						<li><label>response: </label><code>{{ this.response }}</code></li>
-						<li><label>cache: </label><code>{{ this.cache }}</code></li>
-						<li><label>timings: </label><code>{{ this.timings }}</code></li>
-						<li><label>serverIPAddress: </label><code>{{ this.serverIPAddress }}</code></li>
-						<li><label>_initiator: </label><code>{{ this._initiator }}</code></li>
-						<li><label>_priority: </label><code>{{ this._priority }}</code></li>
-						<li><label>_resourceType: </label><code>{{ this._resourceType }}</code></li>
-						<li><label>connection: </label><code>{{ this.connection }}</code></li>
-						<li><label>pageref: </label><code>{{ this.pageref }}</code></li>
-					</ul>
-				</li>
-			{{/each}}
-			</ul>
-		</section>
-
-		<!--
-		schema {
-			type: 'array',
-			'$schema': 'http://json-schema.org/draft-04/schema#',
-			description: '',
-			minItems: 1,
-			uniqueItems: true,
-			items: {
-				type: 'object',
-				properties: {
-					startedDateTime: '2020-05-21T17:59:40.350Z',
-					time: 60.9669999998156,
-					request: {
-						method: [String],
-						url: 'http://localhost:3011/page/amt',
-						httpVersion: 'HTTP/1.1',
-						headers: [
-							[Object], [Object], [Object], ...
-						],
-						queryString: [],
-						cookies: [ [Object], [Object], [Object] ],
-						headersSize: [Integer],
-						bodySize: 0
-					},
-					response: {
-						status: 200,
-						statusText: 'OK',
-						httpVersion: 'HTTP/1.1',
-						headers: [
-							[Object], [Object], [Object], ...
-						],
-						cookies: [],
-						content: {
-						size: 1328029,
-						mimeType: 'text/html',
-						compression: 0,
-						content: {
-							size: 1328029,
-							mimeType: 'text/html',
-							compression: 0,
-							text: '<!DOCTYPE html>\n...',
-							redirectURL: '',
-							headersSize: 1203,
-							bodySize: 1328029,
-							_transferSize: 1329232,
-						}
-					cache: {},
-					timings: {
-						blocked: 3.3589999889228492,
-						dns: 0.015000000000000124,
-						ssl: -1,
-						connect: 0.19900000000000007,
-						send: 0.20500000000000007,
-						wait: 3.3169999922923745,
-						receive: 53.872000018600374,
-						_blocked_queueing: 2.1809999889228493,
-						_blocked_proxy: 0.0020000000000000018
-					},
-					serverIPAddress: '[::1]',
-					_initiator: { type: 'other' },
-					_priority: 'VeryHigh',
-					_resourceType: 'document',
-					connection: '492202',
-					pageref: 'page_78'
-				}
-			}
-		}
-		-->
-		<section class="template--section section--entries">
-		{{#each entries}}
-			<label>startedDateTime: </label><code>{{ this.startedDateTime }}</code><br />
-			<label>time: </label><code>{{ this.time }}</code><br />
-			<label>request: </label><code>{{ this.request }}</code><br />
-			<label>response: </label><code>{{ this.response }}</code><br />
-			<label>cache</label><code>{{ this.cache }}</code><br />
-			<label>timings</label><code>{{ this.timings }}</code><br />
-			<label>serverIPAddress</label><code>{{ this.serverIPAddress }}</code><br />
-			<label>_initiator</label><code>{{ this._initiator }}</code><br />
-			<label>_priority</label><code>{{ this._priority }}</code><br />
-			<label>_resourceType</label><code>{{ this._resourceType }}</code><br />
-			<label>connection</label><code>{{ this.connection }}</code><br />
-			<label>pageref</label><code>{{ this.pageref }}</code><br />
-		{{/each}}
-		</section>
+		</style>
+		<!-- <div id="${this.id}"></div> -->
+		<canvas id="${this.id}"></canvas>
 		`;
 		return tmpl;
 	}
