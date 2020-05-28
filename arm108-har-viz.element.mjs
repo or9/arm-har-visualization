@@ -17,9 +17,7 @@ export default class ArmHarViz extends HTMLElement {
 	}
 
 	connectedCallback () {
-		console.log("#connectedCallback");
-		// this.ctx = this.shadowRoot.getElementById(this.constructor.id).getContext(`2d`);
-		this.ctx = this.shadowRoot.getElementById(this.constructor.id);
+		this.ctx = this.shadowRoot.getElementById(this.constructor.id).getContext(`2d`);
 
 		// insert data or load from URL
 		this.chart = new window.Chart(this.ctx, {
@@ -27,8 +25,6 @@ export default class ArmHarViz extends HTMLElement {
 			data: this.data,
 			options: this.options
 		});
-
-		console.log("so this.chart???", this.chart);
 	}
 
 	adoptedCallback () {
@@ -132,6 +128,12 @@ export default class ArmHarViz extends HTMLElement {
 				contain: content;
 				display: inline-flex;
 			}
+			canvas {
+				contain: content;
+				max-height: 400px;
+				max-width: 600px;
+			}
+		}
 		</style>
 		<!-- <div id="${this.id}"></div> -->
 		<canvas id="${this.id}"></canvas>
