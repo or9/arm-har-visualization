@@ -7,6 +7,10 @@ export default class ArmDropzone extends HTMLElement {
 			this[attr] = this.getAttribute(attr) || this.constructor[`default_${attr}`];
 		});
 
+		const busWorkerName = this.getAttribute("bus-worker");
+		this.busWorker = window[busWorkerName];
+		this.busWorker.postMessage(new ArrayBuffer(), [new ArrayBuffer()]);
+
 		this.attachShadow({ mode: "open" });
 		this.shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 	}
@@ -98,7 +102,7 @@ export default class ArmDropzone extends HTMLElement {
 
 	proxyHighlight (event) {
 		if (event.path.some(el => el.tagName && el.tagName === this.constructor.is.toUpperCase())) {
-			console.log("yes, we're over it");
+			// console.log("yes, we're over it");
 			return this.highlight.call(this, event);
 		}
 	}
@@ -109,15 +113,25 @@ export default class ArmDropzone extends HTMLElement {
 	}
 
 	unhighlight (event) {
-		console.log("#unhilight", event);
+		// console.log("#unhilight", event);
 		this.classList.remove(this.constructor.constant.class.HIGHLIGHT);
 		this.classList.remove(this.constructor.constant.class.INTERACTIVE);
 	}
 
 	dropHandler (event) {
-		console.log("dropHandler", event);
-		console.log("event dataTransfer? ", event.dataTransfer);
-		console.log("event.files? ", event.dataTransfer.files);
+		const files = event.dataTransfer.files;
+		const length = files.length;
+		var i = 0;
+
+		while (i < length) {
+			const file = files[i];
+
+			// File is not a transferrable type
+			file.arrayBuffer()
+			.then((fileArrayBuffer) => this.busWorker.postMessage(fileArrayBuffer, [fileArrayBuffer]));
+
+			i += 1;
+		}
 	}
 
 	dragoverHandler (event) {

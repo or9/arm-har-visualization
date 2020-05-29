@@ -3,23 +3,21 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>HAR Visualization Tool</title>
 	<script id="armInlineWorker" type="javascript/worker">
-		self.onmessage = (message) => self.postMessage([`HELLO Im WORKING ${message}`]);
+		onmessage = (messageEvent) => console.log("@blob busWorker messageEvent", messageEvent);
 	</script>
 	<script type="module">
 		const blob = new Blob([document.getElementById("armInlineWorker").textContent]);
 		const worker = new Worker(window.URL.createObjectURL(blob));
-		worker.onmessage = (message) => console.log("received message from worker: ", message);
 		worker.postMessage("init");
-		setInterval(() => window.postMessage("HEY!"), 5000);
+		window.onmessage = (msg) => console.log("hey a msg: ", msg);
+		worker.addEventListener("message", (msgEvent) => console.log("window handling worker msg event", msgEvent), false);
 
-		window.arm108.harComparison = {
-			...window.arm108.harComparison,
-			fileHandler,
-		};
-
-		function fileHandler (error, fileList) {
-
-		}
+		Object.defineProperty(window, "busWorker", {
+			configurable: false,
+			writable: false,
+			enumerable: true,
+			value: worker
+		});
 	</script>
 	<script src="./node_modules/chart.js/dist/Chart.min.js"></script>
 	<script>
@@ -265,7 +263,7 @@
 		<span id="footerCopyright"></span>
 	</footer>
 
-	<arm-dropzone onfileload="fileLoaded"></arm-dropzone>
+	<arm-dropzone bus-worker="busWorker" onmessage="(message) => console.log('oh hey a msg', message)"></arm-dropzone>
 
 	<script type="module" src="./arm108-har-viz.element.mjs"></script>
 	<script type="module" src="./arm108-dropzone.element.mjs"></script>
