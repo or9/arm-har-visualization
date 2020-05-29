@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"test": "cypress",
-		"start": "node ./index.mjs"
+		"start": "node ./test-server.mjs"
 	},
 	"keywords": [
 		"har",
@@ -17,11 +17,9 @@
 	"author": "Rahman Malik",
 	"license": "MIT",
 	"dependencies": {
-		"chart.js": "^2.9.3",
-		"handlebars": "^4.7.6",
-		"yargs": "^15.3.1"
+		"chart.js": "^2.9.3"
 	},
 	"devDependencies": {
-		"rollup": "^2.10.9"
+		"cypress": "^4.7.0"
 	}
 }
