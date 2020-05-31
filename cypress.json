@@ -1,0 +1,8 @@
+{
+	"baseUrl": "http://localhost:8090",
+	"env": {},
+	"watchForFileChanges": true,
+	"viewportHeight": 600,
+	"viewportWidth": 1000,
+	"nodeVersion": "system"
+}
