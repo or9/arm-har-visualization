@@ -4,11 +4,15 @@ import {
 	createServer,
 	STATUS_CODES,
 } from "http";
-import { createReadStream } from "fs";
+import {
+	createReadStream,
+	readFileSync,
+} from "fs";
 import {
 	resolve,
 	extname,
 } from "path";
+
 const mimeTypes = {
 	".html": "text/html",
 	".htm": "text/html",
@@ -25,15 +29,11 @@ const mimeTypes = {
 // Because modules don't have __dirname injected
 // const __dirname = dirname(new URL(import.meta.url).pathname);
 
-const defaultConfig = getDefaultConfig();
+const { defaultConfig } = JSON.parse(readFileSync(`./package.json`));
 const config = {
 	...defaultConfig,
 	...process.env,
 };
-
-const {
-	TEST_SERVER_PORT,
-} = process.env;
 
 const httpServer = createServer(requestHandler)
 	.listen(config.TEST_SERVER_PORT, config.TEST_SERVER_ADDR, listeningHandler);
@@ -114,11 +114,4 @@ function shutdown (...args) {
 	} else {
 		process.exit(0);
 	}
-}
-
-function getDefaultConfig () {
-	return {
-		TEST_SERVER_PORT: 8090,
-		TEST_SERVER_ADDR: "0.0.0.0",
-	};
 }
