@@ -5,10 +5,13 @@
 	"main": "index.html",
 	"type": "module",
 	"scripts": {
+		"build": "echo 'TODO: perform build.'",
 		"pretest:watch": "echo 'TODO: start server in pretest:watch...'",
 		"test:watch": "cypress open",
 		"test": "cypress run --ci-build-id $BRANCH_NAME",
-		"start": "node ./test-server.mjs"
+		"start": "node ./test-server.mjs",
+		"cypress:har": "echo 'TODO: run cypress and generate har'",
+		"harscraper": "echo 'TODO: if phantomjs used, first npm install phantomjs, then ./har-scraper.js'"
 	},
 	"keywords": [
 		"har",
@@ -21,10 +24,10 @@
 	"dependencies": {
 		"@coreui/icons": "^1.0.1",
 		"chart.js": "^2.9.3",
-		"deep-keys": "^0.5.0"
+		"deep-keys": "^0.5.0",
+		"cypress": "^4.8.0"
 	},
 	"devDependencies": {
-		"cypress": "^4.8.0"
 	},
 	"defaultConfig": {
 		"TEST_SERVER_PORT": 8090,
