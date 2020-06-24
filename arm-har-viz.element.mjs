@@ -347,6 +347,10 @@ export default class ArmHarViz extends HTMLElement {
 		return mappedData;
 	}
 
+	resetData () {
+		this.__data = [];
+	}
+
 	static get canvasId () {
 		return `armVizCanvas`;
 	}
