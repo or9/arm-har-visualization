@@ -53,8 +53,6 @@ export default class ArmVizSummary extends HTMLElement {
 	 * @return {void}
 	 */
 	dataPropChanged (datasets = []) {
-		console.log("@summary#dataPropChanged", datasets);
-
 		const totalsElement = this.shadowRoot.getElementById("totals");
 		totalsElement.innerHTML = ``;
 
@@ -64,7 +62,6 @@ export default class ArmVizSummary extends HTMLElement {
 
 		while (summedPages.length > 0) {
 			const page = summedPages.shift();
-			console.log("page: ", page);
 			const group = this.constructor.buildTotalsGroup(page).content.cloneNode(true);
 
 			totalsElement.appendChild(group);
@@ -75,11 +72,8 @@ export default class ArmVizSummary extends HTMLElement {
 			.flat();
 
 
-		console.log("entries flat: ", entrySummaries);
-
 		while (entrySummaries.length > 0) {
 			const entrySummary = entrySummaries.shift();
-			console.log("entrySummary shifted", entrySummary);
 			const summaryTemplateGroup = this.constructor
 							.buildEntrySummaryGroup(entrySummary)
 							.content
@@ -89,6 +83,8 @@ export default class ArmVizSummary extends HTMLElement {
 				.getElementById("summaryContainer")
 				.appendChild(summaryTemplateGroup);
 		}
+
+		console.info(`\nTODO: compare datasets to identify fastest average, fastest total. Highlight fastest items.`);
 
 		function mapDataToPages ({ metadata, data }) {
 			const defaultPagesAgg = {
@@ -143,10 +139,9 @@ export default class ArmVizSummary extends HTMLElement {
 				if (key === "count") continue;
 
 				const average = timingsSummary[key].total / timingsSummary.count;
-				// console.log("setting average based on key.total ", average);
 				timingsSummary[key] = {
 					...timingsSummary[key],
-					average: average < 0 ? -1 : average,
+					average: average <= 0 ? -1 : average,
 				};
 			}
 
@@ -156,6 +151,11 @@ export default class ArmVizSummary extends HTMLElement {
 			};
 
 			function reduceEntryToSummary (curr, next) {
+				for (const key in next.timings) {
+					if (next.timings[key] < 0) {
+						next.timings[key] = 0;
+					}
+				}
 				return {
 					count: curr.count + 1,
 					time: {
