@@ -118,8 +118,12 @@ export default class ArmHarViz extends HTMLElement {
 					backgroundColor: `rgba(${color.R}, ${color.G}, ${color.B}, 0.9)`,
 					barThickness: "flex",
 					minBarLength: 10,
-					data: data.map((d) => d[axis]),
-					// data: data.map((d) => [ d.startDateTime, d.time ]),
+					// data: data.map((d) => d[axis]),
+					data: data.map((d) => {
+						const v = d.time;
+						// const v = [ d.startedDateTime.substr(14, 9), d.time ];
+						return v;
+					}),
 				};
 			});
 
@@ -246,6 +250,10 @@ export default class ArmHarViz extends HTMLElement {
 				container.appendChild(codeElement);
 			}
 		}
+	}
+
+	getAggregateTotals (data) {
+		console.info("TODO: aggregate totals...");
 	}
 
 	pathAttrChanged (newVal) {

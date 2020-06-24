@@ -204,8 +204,10 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 	populateDatalistOptions (optionsArrayBuffer = "") {
 		const options = optionsArrayBuffer.split(",");
 		const jsonPathInput = this.shadowRoot.getElementById("jsonPath");
-		jsonPathInput.classList.remove("nodisplay");
-		this.shadowRoot.getElementById("settingsBtn").classList.remove("nodisplay");
+		// jsonPathInput.classList.remove("nodisplay");
+		this.shadowRoot.getElementById("vizControls").classList.remove("nodisplay");
+		// this.shadowRoot.getElementById("settingsBtn").classList.remove("nodisplay");
+		// this.shadowRoot.getElementById("resetPath").classList.remove("nodisplay");
 
 		const datalistMap = Array.from(this.shadowRoot.querySelectorAll("#jsonPathDatalist > option"))
 			.map(el => el.value);
@@ -235,15 +237,15 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 		// update attr ( and prop, implicitly )
 	}
 
-	removeChart (event) {
+	removeCharts (event) {
 		console.log("#removeChart event", event);
 		// how do we know which element initiated the action?
-		const chartContainer = this.shadowRoot.getElementById("chartContainer");
+		this.shadowRoot.querySelectorAll("#chartContainer > arm-har-viz")
+			.forEach((viz) => {
+				viz.parentNode.removeChild(viz);
+			});
 
-		chartContainer.removeChild(event.path[0]);
-		if (chartContainer.querySelectorAll(`arm-har-viz`).length === 0) {
-			// notify index that row is empty
-		}
+		this.dispatchEvent(new Event("change"));
 	}
 
 	clearCharts () {
@@ -320,25 +322,42 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 		</style>
 		<arm-dropzone id="armDropzone"></arm-dropzone>
 
-		<input
-			id="jsonPath"
-			placeholder="path"
-			value=""
-			list="jsonPathDatalist"
-			data-attr-name="path"
-			class="nodisplay"
-			/>
-		<datalist id="jsonPathDatalist">
-		</datalist>
-		<!--<svg class="coreui--icon__svg settings--icon">
-			<use href="node_modules/@coreui/icons/sprites/free.svg#cil-settings"></use>
-		</svg>-->
-		<button
-		id="settingsBtn"
-		class="nodisplay"
-		title="Adjust display settings">
-			S
-		</button>
+		<div id="vizControls" class="nodisplay">
+			<input
+				id="jsonPath"
+				placeholder="path"
+				value=""
+				list="jsonPathDatalist"
+				data-attr-name="path"
+				/>
+			<datalist id="jsonPathDatalist">
+			</datalist>
+			<!--<svg class="coreui--icon__svg settings--icon">
+				<use href="node_modules/@coreui/icons/sprites/free.svg#cil-settings"></use>
+			</svg>-->
+			<button
+			id="resetPath"
+			title="Reset path input"
+			>
+				Reset
+			</button>
+			<button
+			id="settingsBtn"
+			title="Adjust display settings">
+				Settings
+			</button>
+			<button
+			id="clearChart"
+			title="Remove chart and data"
+			>
+				Clear
+			</button>
+			<button
+			id="downloadChartImg"
+			title="Download graph as image">
+				Download
+			</button>
+		</div>
 
 		<div id="chartContainer" class="nodisplay"></div>
 		`;

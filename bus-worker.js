@@ -3,6 +3,7 @@ import deepKeys from "./lib/deep-keys/index.mjs";
 self.methods = {
 	addFile,
 	getDeepKeys,
+	getFileContent,
 };
 
 self.onmessage = onmessage;
@@ -42,6 +43,20 @@ async function addFile (fileName, fileBuffer) {
 		strToArrayBuffer("addFile"),
 		strToArrayBuffer(fileName),
 		fileBuffer,
+	]);
+}
+
+async function getFileContent (fileName) {
+	const content = await import(fileName);
+	postMessage([
+		"getFileContent",
+		fileName,
+		content,
+	],
+	[
+		strToArrayBuffer("getFileContent"),
+		strToArrayBuffer(fileName),
+		strToArrayBuffer(fileContent),
 	]);
 }
 

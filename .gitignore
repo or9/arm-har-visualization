@@ -4,3 +4,4 @@ node_modules/
 *.swo
 .metadata_never_index
 .DS_Store
+hardir/
