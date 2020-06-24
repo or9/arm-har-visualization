@@ -41,12 +41,15 @@
 		});
 
 		function rowDataChanged (event) {
-			console.log("#rowDataChanged", event);
+			// console.log("#rowDataChanged", event);
 
 			var rowId = 0;
 			const rowClone = document.getElementById("initialRowDropzone").cloneNode(true);
 			rowClone.id = `cloneRowDropzone_${rowId}`;
 			const hasCharts = event.target.getAttribute("has-chart") === "true";
+
+			document.querySelectorAll(".more--link").forEach((l) => l.classList.remove("expanded"));
+			document.querySelector("header").classList.add("collapsed");
 
 			if (hasCharts) {
 				// TODO: Create another row
@@ -55,8 +58,24 @@
 				newRow.onchange = or9.arm.handlers.rowDataChanged;
 				// document.body.insertBefore(newRow, document.getElementById("footer"));
 				document.getElementById("content").appendChild(newRow);
+				document.body.classList.remove("state--initial");
 			} else {
-				console.log("TODO: remove extra row (if any).");
+				const hasData = Array.from(document.querySelectorAll("arm-row-dropzone"))
+					.some((row) => {
+						return row.getAttribute("has-chart") === "true";
+					});
+
+				document.querySelectorAll("arm-row-dropzone")
+						.forEach((row) => {
+							if (row.id === "initialRowDropzone") return;
+							if (row.getAttribute("has-chart") === "true") return;
+
+							row.parentNode.removeChild(row);
+						});
+
+				if (!hasData) {
+					document.body.classList.add("state--initial");
+				}
 			}
 		}
 	</script>
@@ -85,7 +104,7 @@
 		footer,
 		section {
 			position: relative;
-			width: 100vw;
+			width: 100%;
 			max-width: 100vw;
 			height: auto;
 			flex: 1 0 auto;
@@ -95,6 +114,15 @@
 			box-shadow: 1px 1px 3px 0 rgba(0,0,0,0.1);
 			border-bottom: 1px solid #d7d7d7;
 			flex-grow: 0;
+			align-self: baseline;
+			padding: 10px 20px 0;
+			max-height: 1000px;
+			transition: max-height, 0.2s;
+			overflow: hidden;
+		}
+		header.collapsed {
+			max-height: 50px;
+			transition: max-height, 0.2s;
 		}
 		section {
 			/*flex-grow: 10;
@@ -103,8 +131,11 @@
 			flex-flow: row wrap;
 			align-self: stretch;*/
 			display: block;
-			min-height: 20vh;
+			min-height: 30vh;
 			height: 100%;
+		}
+		.state--initial section {
+			min-height: 68vh;
 		}
 		footer {
 			align-self: stretch;
@@ -117,11 +148,15 @@
 			line-height: 1em;
 		}
 		arm-row-dropzone {
-			width: 100vw;
-			max-width: 100vw;
+			width: 100%;
+			max-width: 100%;
 			min-height: 20vh;
 			height: 100%;
 			display: block;
+			box-sizing: border-box;
+		}
+		.state--initial arm-row-dropzone {
+			min-height: 68vh;
 		}
 		header > h1 {
 			font-weight: normal;
@@ -133,6 +168,33 @@
 			display: inline-block;
 			width: auto;
 		}
+		.more--link {
+			font-size: 0.9em;
+		}
+		.more--link::after {
+			content: "More\2026\2193";
+		}
+		.more--link.expanded::after {
+			content: "Less\2026\2191";
+		}
+		.more--link + .more--content {
+			overflow: hidden;
+			border: 0px solid #fff;
+			height: 0;
+			max-height: 0;
+			transition: height, max-height, opacity, 0.2s;
+			padding: 0;
+			opacity: 0;
+		}
+		.more--link.expanded + .more--content {
+			height: auto;
+			max-height: 1000px;
+			border-width: 1px;
+			border-color: #d7d7d7;
+			transition: height, max-height, opacity, 0.2s;
+			padding: 10px 15px;
+			opacity: 1;
+		}
 
 		@media only screen and (max-width: 600px) {
 
@@ -140,23 +202,29 @@
 	</style>
 
 	<link rel="stylesheet" type="text/css" href="./lib/@coreui/icons/css/free.min.css" />
-</head><body>
+</head><body class="state--initial">
 	<header class="template--section section--header">
 		<h1>HAR Visualization Tool</h1>
 		<nav id="nav">Header nav</nav>
 		<a class="link--source-code"
-		href="https://github.com/or9/har-compare-viz"
+		href="https://github.com/or9/arm-har-visualization"
 		target="_blank">
 			Source Code
 		</a>
+		<p>
+			This tool compares HAR (HTTP Archive) files, which can contain sensitive information such as cookies, passwords, credit-card info, etc.
+		</p>
+		<!-- TODO: maybe consider extracting this more--link / more--content stuff to its own custom element -->
+		<a class="more--link" href="#" data-title-content-id="detailsContent"></a>
+		<p class="more--content" id="detailsContent">
+			Anything which is transmitted while recording will be saved to the HAR file, and as such, it should not be shared with others. This HAR comparison application does not rely on any server-side processing aside from initial delivery of files, except for the following opt-in features (which may or may not be released yet):
+			<br />
+			&bull; Summary comparison
+			<br />
+			&bull; HAR Generator
+		</p>
 	</header>
 	<section class="content" id="content">
-		<p>
-			This tool compares HAR (HTTP Archive) files, which can contain sensitive information such as cookies, passwords, credit-card info, etc. Anything which is transmitted while recording will be saved to the HAR file, and as such, it should not be shared with others.
-			<span class="more">
-				This HAR comparison application does not rely on any server-side processing aside from initial delivery of files.
-			</span>
-		</p>
 		<arm-row-dropzone
 			id="initialRowDropzone"
 			onchange="or9.arm.handlers.rowDataChanged(event)"
@@ -179,27 +247,20 @@
 				el.setAttribute("href", href);
 			});
 
+		document.querySelectorAll(".more--link")
+			.forEach((el) => {
+				el.onclick = () => {
+					el.classList.toggle("expanded");
+					if (el.classList.contains("expanded")) {
+						el.title = "";
+					} else {
+						el.title = el.dataset.oldTitle;
+					}
+				};
 
-		var rowId = 0;
-		const rowClone = document.getElementById("initialRowDropzone").cloneNode(true);
-		rowClone.id = `cloneRowDropzone_${rowId}`;
-
-		window.handleDataChanged = handleRowChanged;
-
-		function handleRowChanged (event) {
-			console.log("\n\nwindow.handleDataChanged", event.target.getAttribute("has-chart"));
-			const hasCharts = event.target.getAttribute("has-chart") === "true";
-			if (hasCharts) {
-				// TODO: Create another row
-				const newRow = document.createElement(rowClone.nodeName).cloneNode(true);
-				newRow.id = `cloneRowDropzone_${rowId += 10}`;
-				newRow.onchange = handleRowChanged;
-				// document.body.insertBefore(newRow, document.getElementById("footer"));
-				document.getElementById("content").appendChild(newRow);
-			} else {
-				console.log("TODO: remove extra row (if any).");
-			}
-		}
+				el.title = document.getElementById(el.dataset.titleContentId).innerHTML;
+				el.dataset.oldTitle = el.title;
+			});
 	</script>
 
 	<!-- Please use cil- prefix for linear icons, cib- prefix for brand icons, and cif- prefix for flag icons. -->

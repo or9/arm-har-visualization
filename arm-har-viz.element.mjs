@@ -78,7 +78,13 @@ export default class ArmHarViz extends HTMLElement {
 				if (curr.data.length > next.data.length) return curr
 				else return next;
 			}, { data: [] }).data
-			.map((d, i) => `${d.request.method} ${new URL(d.request.url).pathname}`);
+			.map((d, i) => {
+				if (d.request) {
+					return `${d.request.method} ${new URL(d.request.url).pathname}`;
+				} else {
+					return `${i}`;
+				}
+			});
 			// .flat();
 
 			const colorMap = datasets.map((d, index, arr) => {
@@ -156,8 +162,12 @@ export default class ArmHarViz extends HTMLElement {
 					],
 					xAxes: [
 						{
+							type: `logarithmic`,
 							ticks: {
 								beginAtZero: true,
+								callback (value) {
+									return `${value}ms`;
+								}
 							}
 						}
 					],
@@ -169,7 +179,7 @@ export default class ArmHarViz extends HTMLElement {
 			}, 0);
 
 			// Set height so that responsive / flex bars will scale appropriately
-			this.style.height = longestArrayLength * 20 + "px";
+			this.style.height = longestArrayLength * 30 + "px";
 
 			this.chart.data = data;
 			this.chart.options = options;
@@ -252,8 +262,18 @@ export default class ArmHarViz extends HTMLElement {
 		}
 	}
 
-	getAggregateTotals (data) {
-		console.info("TODO: aggregate totals...");
+	get downloadFilename () {
+		return this.data.map((dataset) => dataset.metadata).join("--");
+	}
+
+	get downloadUrl () {
+		const canvas = this.shadowRoot.querySelector("canvas");
+		if (canvas) {
+			return canvas.toDataURL("image/png")
+				// .replace("image/png", "image/octet-stream");
+		} else {
+			return false;
+		}
 	}
 
 	pathAttrChanged (newVal) {

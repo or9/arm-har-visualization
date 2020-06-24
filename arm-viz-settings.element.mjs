@@ -28,12 +28,23 @@ export default class ArmVizSettings extends HTMLElement {
 	}
 
 	attributeChangedCallback (attrName, oldVal, newVal) {
+		const funcName = `${attrName}AttrChanged`;
+		if (typeof this[funcName] === "function") {
+			this[funcName](newVal);
+		} else {
+			console.info(`No handler registered for attr ${attrName}`);
+		}
+	}
 
+	static get observedAttributes () {
+		return [
+			`path`,
+		];
 	}
 
 	static buildTemplate () {
 		const tmpl = document.createElement("template");
-		const tmpl.innerHTML = /* html */`
+		tmpl.innerHTML = /* html */`
 
 		`;
 		return tmpl;

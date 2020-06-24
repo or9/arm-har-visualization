@@ -1,5 +1,7 @@
 import "./arm-dropzone.element.mjs";
 import "./arm-har-viz.element.mjs";
+import "./arm-viz-summary.element.mjs";
+import "./arm-viz-settings.element.mjs";
 import {
 	converter,
 	obj,
@@ -74,7 +76,13 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 			}, false);
 		});
 
-		console.info("@arm108-row-dropzone#constructor TODO: add listener for window.location.hash update and update path to match? Or watch all observedAttributes of arm-har-viz?");
+		this.shadowRoot.getElementById("resetPath").onclick = () => {
+			const path = JSON.stringify(this.getAttribute("path").split(".")[0]).replace(/\"/g, "");
+			this.shadowRoot.getElementById("jsonPath").value = path;
+			this.shadowRoot.getElementById("jsonPath").dispatchEvent(new Event("change"));
+		};
+
+		this.shadowRoot.getElementById("clearChart").onclick = this.removeCharts.bind(this);
 	}
 
 	connectedCallback () {
@@ -140,13 +148,15 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 			console.debug(err);
 			console.warn("Error trying to parse file", err.message);
 		}
-		console.info("TODO: aggregate all data and display a summary of key differences");
 
 		function updateChartData (fileName, dataText) {
 			this.shadowRoot.getElementById("chartContainer").classList.remove("nodisplay");
 			const data = `{ "metadata": "${fileName}", "data": ${dataText} }`;
 
 			const chartContainer = this.shadowRoot.getElementById("chartContainer");
+			const summaryElement = this.shadowRoot.getElementById("summary");
+			summaryElement.classList.remove("nodisplay");
+			summaryElement.setAttribute("data", data);
 
 			if (chartContainer.querySelectorAll("arm-har-viz").length === 0) {
 				// Does not have a chart, create one
@@ -177,8 +187,6 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 
 	handleVizChange (event) {
 		const path = event.target.getAttribute("path");
-		console.log("set path to path", path);
-		// this.setAttribute("path", path);
 		const jsonPathInput = this.shadowRoot.getElementById("jsonPath");
 		jsonPathInput.value = path;
 		jsonPathInput.dispatchEvent(new Event("change"));
@@ -196,6 +204,14 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 	pathAttrChanged (oldVal, newVal) {
 		this.shadowRoot.querySelectorAll("#chartContainer > arm-har-viz")
 			.forEach((vizElement) => {
+				const downloadLink = this.shadowRoot.getElementById("downloadChart");
+				if (vizElement.downloadUrl) {
+					downloadLink.download = `${vizElement.downloadFilename}-chart.png`;
+					downloadLink.href = vizElement.downloadUrl;
+				} else {
+					downloadLink.href = "";
+				}
+
 				if (vizElement.getAttribute("path") === newVal) return;
 				else vizElement.setAttribute("path", newVal);
 			});
@@ -240,16 +256,18 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 	removeCharts (event) {
 		console.log("#removeChart event", event);
 		// how do we know which element initiated the action?
+		this.setAttribute("path", "");
+		this.setAttribute("has-chart", false);
+		this.shadowRoot.getElementById("summary").classList.add("nodisplay");
+		this.shadowRoot.getElementById("chartContainer").classList.add("nodisplay");
+		this.shadowRoot.getElementById("vizControls").classList.add("nodisplay");
+		this.shadowRoot.querySelector("arm-dropzone").classList.remove("row--has-data");
 		this.shadowRoot.querySelectorAll("#chartContainer > arm-har-viz")
 			.forEach((viz) => {
 				viz.parentNode.removeChild(viz);
 			});
 
 		this.dispatchEvent(new Event("change"));
-	}
-
-	clearCharts () {
-		this.shadowRoot.getElementById("chartContainer").innerHTML = "";
 	}
 
 	clearDatalistOptions () {
@@ -287,6 +305,7 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 			position: relative;
 			contain: content;
 			height: auto;
+			padding: 10px 20px;
 		}
 		#chartContainer {
 			position: relative;
@@ -309,19 +328,18 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 			position: fixed;
 			width: 100%;
 			height: 100%;
-			min-height: 20vh;
+			left: 0;
+			top: 0;
 			box-sizing: border-box;
 		}
 		arm-dropzone.row--has-data {
-			opacity: 0.5;
+			opacity: 0.8;
 		}
 
 		.nodisplay {
 			display: none !important;
 		}
 		</style>
-		<arm-dropzone id="armDropzone"></arm-dropzone>
-
 		<div id="vizControls" class="nodisplay">
 			<input
 				id="jsonPath"
@@ -339,7 +357,7 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 			id="resetPath"
 			title="Reset path input"
 			>
-				Reset
+				Reset Path
 			</button>
 			<button
 			id="settingsBtn"
@@ -352,14 +370,17 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 			>
 				Clear
 			</button>
-			<button
-			id="downloadChartImg"
+			<a
+			id="downloadChart"
+			href="#"
 			title="Download graph as image">
 				Download
-			</button>
+			</a>
 		</div>
+		<arm-viz-summary id="summary" class="nodisplay"></arm-viz-summary>
 
 		<div id="chartContainer" class="nodisplay"></div>
+		<arm-dropzone id="armDropzone"></arm-dropzone>
 		`;
 		return tmpl;
 	}

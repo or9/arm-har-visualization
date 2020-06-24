@@ -225,12 +225,12 @@ export default class ArmDropzone extends HTMLElement {
 			pointer-events: all;
 			display: inline-flex;
 			position: relative;
-			flex: 1 1 100%;
+			flex: 1 0 auto;
 		}
 		.dropfiles--icon {
 			position: relative;
 			display: inline-flex;
-			flex: 1 1 100%;
+			flex: 1 0 auto;
 			fill: lightblue;
 		}
 		:host(.${this.constant.class.HIGHLIGHT}) .dropfiles--icon {
@@ -241,6 +241,10 @@ export default class ArmDropzone extends HTMLElement {
 		:host(.${this.constant.class.INTERACTIVE}) .dropfiles--icon {
 			transition: width, height, fill, 0.5s;
 			width: 20%;
+		}
+		:host(.row--has-data) .dropfiles--icon,
+		:host(.row--has-data) input {
+			display: none;
 		}
 		</style>
 
