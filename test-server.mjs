@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import {
 	createServer,
 	STATUS_CODES,
@@ -24,6 +23,10 @@ const mimeTypes = {
 	".cjs": "application/javascript",
 	".css": "text/css",
 	".ico": "image/vnd",
+	".map": "application/octet-stream",
+	".svg": "image/svg+xml",
+	".ttf": "font/ttf",
+	".woff": "font/woff",
 };
 
 // Because modules don't have __dirname injected
@@ -36,11 +39,10 @@ const config = {
 };
 
 const httpServer = createServer(requestHandler)
-	.listen(config.TEST_SERVER_PORT, config.TEST_SERVER_ADDR, listeningHandler);
-
-httpServer.on("error", (err) => {
-	console.error("Caught error", err);
-});
+	.listen(config.TEST_SERVER_PORT, config.TEST_SERVER_ADDR, listeningHandler)
+	.on("error", (err) => {
+		console.error("Caught error", err);
+	});
 
 process.on(`SIGTERM`, shutdown);
 process.on(`SIGINT`, shutdown);
@@ -74,23 +76,18 @@ function requestHandler (req, res) {
 		createReadStream(resolve(path))
 			.on("error", requestErrorHandler)
 			.pipe(res);
-
-		// try to send back file
-		// if not found, 404
-		// readFile();
-		// createReadStream?
-		// 	res.pipe(chunk)?
-		// 	readableStream.on(end, res.end())?
 	}
 
 	function requestErrorHandler (err) {
 		console.error("Caught error handling request", err);
 		if (err.code === "ENOENT") {
-			res.writeHead(404);
-			res.end(STATUS_CODES["404"]);
+			res
+				.writeHead(404)
+				.end(STATUS_CODES["404"]);
 		} else {
-			res.writeHead(500);
-			res.end(STATUS_CODES["500"] + ":" + err.message);
+			res
+				.writeHead(500)
+				.end(STATUS_CODES["500"] + ":" + err.message);
 		}
 	}
 }
@@ -100,18 +97,13 @@ function listeningHandler () {
 }
 
 function shutdown (...args) {
-	console.info("Server shutting down... args?", args.length);
-	console.log("args 0", args[0]);
-	console.log("args 1", args[1]);
-	console.log("args 2", args[2]);
-
 	httpServer.close();
 
-	console.info("Server closed. now exit");
-
 	if (args[1] === "uncaughtException") {
+		console.error(args[0]);
 		process.exit(1);
 	} else {
+		console.info(args[0]);
 		process.exit(0);
 	}
 }

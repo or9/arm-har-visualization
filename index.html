@@ -2,272 +2,249 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>HAR Visualization Tool</title>
-	<script id="armInlineWorker" type="javascript/worker">
-		onmessage = (messageEvent) => console.log("@blob busWorker messageEvent", messageEvent);
+	<script type="module" src="./arm-row-dropzone.element.mjs"></script>
+
+	<!-- <script src="./lib/chart.js/dist/Chart.min.js"></script> -->
+	<script src="./lib/chart.js/dist/Chart.js"></script>
+	<!-- <script src="https://www.jsdelivr.com/package/npm/chart.js?path=dist"></script> -->
+	<script type="module">
+		// Disable automatic style injection
+		window.Chart.platform.disableCSSInjection = true;
 	</script>
 	<script type="module">
-		const blob = new Blob([document.getElementById("armInlineWorker").textContent]);
-		const worker = new Worker(window.URL.createObjectURL(blob));
-		worker.postMessage("init");
-		window.onmessage = (msg) => console.log("hey a msg: ", msg);
-		worker.addEventListener("message", (msgEvent) => console.log("window handling worker msg event", msgEvent), false);
-
-		Object.defineProperty(window, "busWorker", {
-			configurable: false,
-			writable: false,
+		const config = {
 			enumerable: true,
-			value: worker
+			writable: false,
+			configurable: false,
+		};
+
+		Object.defineProperty(window, "or9", {
+			...config,
+			value: {
+				...window.or9,
+			},
 		});
-	</script>
-	<script src="./node_modules/chart.js/dist/Chart.min.js"></script>
-	<script>
-		(() => {
-			// Disable automatic style injection
-			window.Chart.platform.disableCSSInjection = true;
-		})();
+
+		Object.defineProperty(window.or9, "arm", {
+			...config,
+			value: {
+				...window.or9.arm,
+			}
+		});
+
+		Object.defineProperty(window.or9.arm, "handlers", {
+			...config,
+			value: {
+				...window.or9.arm.handlers,
+				rowDataChanged,
+			}
+		});
+
+		function rowDataChanged (event) {
+			console.log("#rowDataChanged", event);
+
+			var rowId = 0;
+			const rowClone = document.getElementById("initialRowDropzone").cloneNode(true);
+			rowClone.id = `cloneRowDropzone_${rowId}`;
+			const hasCharts = event.target.getAttribute("has-chart") === "true";
+
+			if (hasCharts) {
+				// TODO: Create another row
+				const newRow = document.createElement(rowClone.nodeName).cloneNode(true);
+				newRow.id = `cloneRowDropzone_${rowId += 10}`;
+				newRow.onchange = or9.arm.handlers.rowDataChanged;
+				// document.body.insertBefore(newRow, document.getElementById("footer"));
+				document.getElementById("content").appendChild(newRow);
+			} else {
+				console.log("TODO: remove extra row (if any).");
+			}
+		}
 	</script>
 	<style type="text/css">
+		html {
+			background: white;
+		}
 		body {
 			padding: 0;
 			margin: 0;
 			display: flex;
+			flex-flow: row wrap;
+			height: auto;
+			min-height: 100vh;
+			max-width: 100vw;
 			float: none;
 			clear: both;
-			flex-direction: column;
 			box-sizing: border-box;
+			color: #333;
+			font: 16px/24px Helvetica, Arial, sans-serif;
+			/*align-items: flex-start;
+			align-content: stretch;
+			justify-content: stretch;*/
 		}
 		header,
-		footer {
-			position: relative;
-			flex: 1 0 100%;
-		}
+		footer,
 		section {
 			position: relative;
+			width: 100vw;
+			max-width: 100vw;
+			height: auto;
+			flex: 1 0 auto;
+			box-sizing: border-box;
 		}
-		arm-har-viz {
-			display: inline-flex;
-			max-height: 400px;
-			width: 33vw;
+		header {
+			box-shadow: 1px 1px 3px 0 rgba(0,0,0,0.1);
+			border-bottom: 1px solid #d7d7d7;
+			flex-grow: 0;
 		}
-		arm-dropzone {
-			width: calc(50% - 10px);
-			height: calc(50% - 10px);
+		section {
+			/*flex-grow: 10;
+			flex-basis: auto;
+			display: flex;
+			flex-flow: row wrap;
+			align-self: stretch;*/
 			display: block;
-			position: fixed;
-			right: 0;
-			/*pointer-events: none;*/
+			min-height: 20vh;
+			height: 100%;
+		}
+		footer {
+			align-self: stretch;
+			border-top: 1px solid #d7d7d7;
+			padding: 20px 20px 100px;
+			flex-shrink: 0;
+			background: #333;
+			color: #fff;
+			font-size: 0.9em;
+			line-height: 1em;
+		}
+		arm-row-dropzone {
+			width: 100vw;
+			max-width: 100vw;
+			min-height: 20vh;
+			height: 100%;
+			display: block;
+		}
+		header > h1 {
+			font-weight: normal;
+			display: inline-block;
+			width: auto;
+			margin: 10px 0 0;
+		}
+		header > nav {
+			display: inline-block;
+			width: auto;
 		}
 
 		@media only screen and (max-width: 600px) {
-			section {
-				flex-direction: row;
-			}
 
-			arm-har-viz {
-				display: inline-flex;
-				width: 100%;
-				max-height: none;
-			}
 		}
 	</style>
+
+	<link rel="stylesheet" type="text/css" href="./lib/@coreui/icons/css/free.min.css" />
 </head><body>
 	<header class="template--section section--header">
-		<nav>Header nav</nav>
-		<a href="https://github.com/or9/har-compare-viz">Source Code</a>
+		<h1>HAR Visualization Tool</h1>
+		<nav id="nav">Header nav</nav>
+		<a class="link--source-code"
+		href="https://github.com/or9/har-compare-viz"
+		target="_blank">
+			Source Code
+		</a>
 	</header>
-	<h1>HAR Visualization Tool</h1>
-
-	<!-- compare side-by-side, or same chart, multiple data? -->
-	<!-- same chart seems better; display filters which allow hiding comparison datasets -->
-	<section class="template--section section--body">
-		<!-- meta section -->
-		<arm-har-viz></arm-har-viz>
-		<arm-har-viz></arm-har-viz>
-		<arm-har-viz></arm-har-viz>
+	<section class="content" id="content">
+		<arm-row-dropzone
+			id="initialRowDropzone"
+			onchange="or9.arm.handlers.rowDataChanged(event)"
+			>
+		</arm-row-dropzone>
 	</section>
-
-	<section class="template--section section--body">
-		<!-- pages section -->
-		<arm-har-viz></arm-har-viz>
-	</section>
-
-	<section class="template--section section--body">
-		<!-- entries section -->
-		<arm-har-viz></arm-har-viz>
-	</section>
-
-	<!--
-		schema {
-			'$schema': 'http://json-schema.org/draft-04/schema#',
-			description: '',
-			type: 'object',
-			properties: {
-				version: {
-					type: 'string',
-					minLength: 1
-				},
-				creator: {
-					type: 'object',
-					properties: {
-						name: { type: 'string', minLength: 1 },
-						version: { type: 'string', minLength: 1 }
-					},
-					required: [ 'name', 'version' ]
-				},
-				pages: { type: 'array', uniqueItems: true, minItems: 1, items: [Object] },
-				entries: { type: 'array', uniqueItems: true, minItems: 1, items: [Object] }
-			},
-			required: [ 'version', 'creator', ... ]
-		}
-		-->
-		<!-- <p class="template--section section--meta">
-			<span class="version"><code>{{ version }}</code></span>
-			<span class="creator">{{ creator.name }} <code>{{ creator.version }}</code></span>
-		</p> -->
-
-		<!--
-		schema {
-			type: 'array',
-			'$schema': 'http://json-schema.org/draft-04/schema#',
-			description: '',
-			minItems: 1,
-			uniqueItems: true,
-			items: {
-				type: 'object',
-				properties: {
-					startedDateTime: [Object],
-					time: [Object],
-					request: [Object],
-					response: [Object],
-					cache: [Object],
-					timings: [Object],
-					serverIPAddress: [Object],
-					_initiator: [Object],
-					_priority: [Object],
-					_resourceType: [Object],
-					connection: [Object],
-					pageref: [Object]
-				}
-			}
-		}
-		-->
-		<!-- <section class="template--section section--pages">
-			<ul>
-			{{#each pages}}
-				<li>
-					<ul>
-						<li><label>startedDateTime: </label><code>{{ this.startedDateTime }}</code></li>
-						<li><label>time: </label><code>{{ this.time }}</code></li>
-						<li><label>request: </label><code>{{ this.request }}</code></li>
-						<li><label>response: </label><code>{{ this.response }}</code></li>
-						<li><label>cache: </label><code>{{ this.cache }}</code></li>
-						<li><label>timings: </label><code>{{ this.timings }}</code></li>
-						<li><label>serverIPAddress: </label><code>{{ this.serverIPAddress }}</code></li>
-						<li><label>_initiator: </label><code>{{ this._initiator }}</code></li>
-						<li><label>_priority: </label><code>{{ this._priority }}</code></li>
-						<li><label>_resourceType: </label><code>{{ this._resourceType }}</code></li>
-						<li><label>connection: </label><code>{{ this.connection }}</code></li>
-						<li><label>pageref: </label><code>{{ this.pageref }}</code></li>
-					</ul>
-				</li>
-			{{/each}}
-			</ul>
-		</section> -->
-
-		<!--
-		schema {
-			type: 'array',
-			'$schema': 'http://json-schema.org/draft-04/schema#',
-			description: '',
-			minItems: 1,
-			uniqueItems: true,
-			items: {
-				type: 'object',
-				properties: {
-					startedDateTime: '2020-05-21T17:59:40.350Z',
-					time: 60.9669999998156,
-					request: {
-						method: [String],
-						url: 'http://localhost:3011/page/amt',
-						httpVersion: 'HTTP/1.1',
-						headers: [
-							[Object], [Object], [Object], ...
-						],
-						queryString: [],
-						cookies: [ [Object], [Object], [Object] ],
-						headersSize: [Integer],
-						bodySize: 0
-					},
-					response: {
-						status: 200,
-						statusText: 'OK',
-						httpVersion: 'HTTP/1.1',
-						headers: [
-							[Object], [Object], [Object], ...
-						],
-						cookies: [],
-						content: {
-						size: 1328029,
-						mimeType: 'text/html',
-						compression: 0,
-						content: {
-							size: 1328029,
-							mimeType: 'text/html',
-							compression: 0,
-							text: '<!DOCTYPE html>\n...',
-							redirectURL: '',
-							headersSize: 1203,
-							bodySize: 1328029,
-							_transferSize: 1329232,
-						}
-					cache: {},
-					timings: {
-						blocked: 3.3589999889228492,
-						dns: 0.015000000000000124,
-						ssl: -1,
-						connect: 0.19900000000000007,
-						send: 0.20500000000000007,
-						wait: 3.3169999922923745,
-						receive: 53.872000018600374,
-						_blocked_queueing: 2.1809999889228493,
-						_blocked_proxy: 0.0020000000000000018
-					},
-					serverIPAddress: '[::1]',
-					_initiator: { type: 'other' },
-					_priority: 'VeryHigh',
-					_resourceType: 'document',
-					connection: '492202',
-					pageref: 'page_78'
-				}
-			}
-		}
-		-->
-		<!-- <section class="template--section section--entries">
-		{{#each entries}}
-			<label>startedDateTime: </label><code>{{ this.startedDateTime }}</code><br />
-			<label>time: </label><code>{{ this.time }}</code><br />
-			<label>request: </label><code>{{ this.request }}</code><br />
-			<label>response: </label><code>{{ this.response }}</code><br />
-			<label>cache</label><code>{{ this.cache }}</code><br />
-			<label>timings</label><code>{{ this.timings }}</code><br />
-			<label>serverIPAddress</label><code>{{ this.serverIPAddress }}</code><br />
-			<label>_initiator</label><code>{{ this._initiator }}</code><br />
-			<label>_priority</label><code>{{ this._priority }}</code><br />
-			<label>_resourceType</label><code>{{ this._resourceType }}</code><br />
-			<label>connection</label><code>{{ this.connection }}</code><br />
-			<label>pageref</label><code>{{ this.pageref }}</code><br />
-		{{/each}}
-		</section> -->
-
-	<footer class="template--section section--footer">
-		<span id="footerCopyright"></span>
+	<footer id="footer" class="template--section section--footer">
+		<span id="footerCopyright"><!-- content will be populated by JS --></span>
 	</footer>
 
-	<arm-dropzone bus-worker="busWorker" onmessage="(message) => console.log('oh hey a msg', message)"></arm-dropzone>
-
-	<script type="module" src="./arm108-har-viz.element.mjs"></script>
-	<script type="module" src="./arm108-dropzone.element.mjs"></script>
 	<script type="module">
 		document.getElementById("footerCopyright").innerHTML = `©${new Date().getFullYear()} by Rahman Malik`;
+
+		// For some reason, SVGs don't seem to load (at least from shadow DOM)
+		// without removing and adding their href attribute....
+		document.body.querySelectorAll(".coreui--icon__svg > use")
+			.forEach((el) => {
+				const href = el.getAttribute("href");
+				el.setAttribute("href", "");
+				el.setAttribute("href", href);
+			});
+
+
+		var rowId = 0;
+		const rowClone = document.getElementById("initialRowDropzone").cloneNode(true);
+		rowClone.id = `cloneRowDropzone_${rowId}`;
+
+		window.handleDataChanged = handleRowChanged;
+
+		function handleRowChanged (event) {
+			console.log("\n\nwindow.handleDataChanged", event.target.getAttribute("has-chart"));
+			const hasCharts = event.target.getAttribute("has-chart") === "true";
+			if (hasCharts) {
+				// TODO: Create another row
+				const newRow = document.createElement(rowClone.nodeName).cloneNode(true);
+				newRow.id = `cloneRowDropzone_${rowId += 10}`;
+				newRow.onchange = handleRowChanged;
+				// document.body.insertBefore(newRow, document.getElementById("footer"));
+				document.getElementById("content").appendChild(newRow);
+			} else {
+				console.log("TODO: remove extra row (if any).");
+			}
+		}
 	</script>
+
+	<!-- Please use cil- prefix for linear icons, cib- prefix for brand icons, and cif- prefix for flag icons. -->
+	<!-- interesting icons
+	ban
+	bell-exclamation
+	buffer
+	chat-bubble
+	check-circle
+	clear-all
+	clone
+	cloud-download
+	cloud-upload
+	clipboard
+	comment-square
+	comment-bubble
+	columns
+	copy
+	data-transfer-up
+	data-transfer-down
+	devices
+	double-quote-sans-left
+	double-quote-sans-right
+	drop
+	envelope-open
+	ethernet
+	exit-to-app
+	external-link
+	filter
+	file
+	fullscreen
+	fullscreen-exit
+	github
+	hand-point- (up, down, left, right)
+	home
+	https
+	image-plus <<-- good
+	info
+	library-add <<-- great
+	menu
+	minus
+	people
+	plus
+	save
+	search
+	settings
+	toggle-off / on
+	trash <<-- yes
+	user
+	user- (x, plus, unfollow, follow)
+	view- (column, quilt, stream, module)
+	warning
+	-->
 </body></html>
