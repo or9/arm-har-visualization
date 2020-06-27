@@ -27,6 +27,7 @@ const mimeTypes = {
 	".svg": "image/svg+xml",
 	".ttf": "font/ttf",
 	".woff": "font/woff",
+	".webmanifest": "application/manifest+json",
 };
 
 // Because modules don't have __dirname injected

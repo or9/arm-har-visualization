@@ -2,12 +2,48 @@ export const converter = {
 	arrayBufferToString,
 	stringToArrayBuffer,
 	hsvToRgb,
+	convertToUnits,
 };
 
 export const obj = {
 	getPropFromPath,
 	getPathFromObj,
 };
+
+/**
+ * Convert from a given number to a shorter string including the units
+ * @param  {Number} ms   The initial number to convert from
+ * @return {String}       Output string formatted to match input values
+ */
+function convertToUnits (milliseconds = 0) {
+	milliseconds = parseFloat(milliseconds, 10);
+	// If units is ms, and number is > 1000...
+	// If units is [sec|min], and number is > 60
+	// If units is hours, and number is > 24
+	// Going to assume units is ms
+	if (milliseconds === -1) return milliseconds;
+
+	var suffix = "millisecond";
+	var amount = milliseconds;
+	const seconds = milliseconds / 1000;
+	const minutes = seconds / 60;
+
+
+	if (minutes > 1) {
+		amount = minutes;
+		suffix = "minute";
+	} else if (seconds > 1) {
+		amount = seconds;
+		suffix = "second";
+	}
+
+	return new Intl.NumberFormat(navigator.language, {
+		style: "unit",
+		unit: suffix,
+		precision: 6,
+	})
+	.format(amount);
+}
 
 /**
  * Get value for a property described by schema param

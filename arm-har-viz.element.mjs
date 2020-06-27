@@ -69,7 +69,8 @@ export default class ArmHarViz extends HTMLElement {
 		const isGraphableData = datasets.length && datasets.every(({ data }) => {
 			return Array.isArray(data);
 		});
-		console.log("datasets", datasets);
+		// console.log("datasets", datasets);
+		console.info(`TODO: allow parameterized graph type such as scatter / line`);
 		if (isGraphableData) {
 
 			this.chart.data = {};
@@ -89,7 +90,7 @@ export default class ArmHarViz extends HTMLElement {
 
 			const colorMap = datasets.map((d, index, arr) => {
 				const baseIncrement = 360 / arr.length;
-				return converter.hsvToRgb(baseIncrement * (index + 1), 80, 100);
+				return converter.hsvToRgb(baseIncrement * (index + 1), 80, 80);
 			});
 
 			const chartDatasets = datasets.map(({ metadata, data }, index) => {
@@ -179,7 +180,7 @@ export default class ArmHarViz extends HTMLElement {
 			}, 0);
 
 			// Set height so that responsive / flex bars will scale appropriately
-			this.style.height = longestArrayLength * 30 + "px";
+			this.style.height = longestArrayLength * 20 * datasets.length + "px";
 
 			this.chart.data = data;
 			this.chart.options = options;
@@ -345,7 +346,12 @@ export default class ArmHarViz extends HTMLElement {
 	 * @return {void}
 	 */
 	set data (val = { metadata: "", data: {} }) {
-		this.__data.push(val);
+		if (this.__data.find(({ metadata }) => metadata === val.metadata)) {
+			console.info(`Not adding duplicate data key (filename already exists)`);
+			return;
+		} else {
+			this.__data.push(val);
+		}
 	}
 
 	/**
@@ -460,9 +466,8 @@ export default class ArmHarViz extends HTMLElement {
 		// ${this} is constructor in context
 		const tmpl = document.createElement(`template`);
 		tmpl.innerHTML = /* html */`
-		<!-- <link rel="stylesheet" type="text/css" href="./node_modules/chart.js/dist/Chart.min.css"> -->
 		<style type="text/css">
-			@import "./node_modules/chart.js/dist/Chart.min.css";
+			@import "./lib/chart.js/dist/Chart.min.css";
 			:host {
 				contain: content;
 				display: block;

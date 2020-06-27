@@ -249,7 +249,7 @@ export default class ArmDropzone extends HTMLElement {
 		</style>
 
 		<svg class="coreui--icon__svg dropfiles--icon">
-			<use href="node_modules/@coreui/icons/sprites/free.svg#cil-library-add"></use>
+			<use href="lib/@coreui/icons/sprites/free.svg#cil-library-add"></use>
 		</svg>
 
 		<input type="file"

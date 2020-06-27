@@ -19,7 +19,7 @@ function busWorkerMixin (__class) {
 
 			const busWorkerName = this.getAttribute("bus-worker");
 			this.busWorker = window[busWorkerName];
-			this.busWorker.postMessage(new ArrayBuffer(), [new ArrayBuffer()]);
+			this.busWorker.postMessage("getFileContent");
 		}
 	}
 }
@@ -100,6 +100,16 @@ export default class ArmRowDropzone extends reflectToPropertyMixin(HTMLElement) 
 		this.shadowRoot.getElementById("armDropzone").busWorker = this.busWorker;
 
 		this.busWorker.onmessage = this.onmessage.bind(this);
+
+
+		this.busWorker.postMessage([
+			"getFileContent",
+			"package.json",
+		],
+		[
+			converter.stringToArrayBuffer("getFileContent"),
+			converter.stringToArrayBuffer("package.json"),
+		]);
 	}
 
 	disconnectedCallback () {

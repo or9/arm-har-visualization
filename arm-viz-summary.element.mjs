@@ -19,6 +19,8 @@ export default class ArmVizSummary extends HTMLElement {
 		const toggleSummaryCheckbox = this.shadowRoot.getElementById("toggleSummaryDisplay");
 		toggleSummaryCheckbox.onchange = this.toggleSummaryDisplay.bind(this);
 		toggleSummaryCheckbox.dispatchEvent(new Event("change"));
+
+		this.shadowRoot.getElementById("toggleCollapseBtn").onclick = this.toggleCollapse.bind(this);
 	}
 
 	connectedCallback () {
@@ -56,6 +58,9 @@ export default class ArmVizSummary extends HTMLElement {
 		const totalsElement = this.shadowRoot.getElementById("totals");
 		totalsElement.innerHTML = ``;
 
+		const summariesElement = this.shadowRoot.getElementById("summaries");
+		summariesElement.innerHTML = ``;
+
 		const summedPages = datasets
 			.map(mapDataToPages)
 			.flat();
@@ -79,12 +84,11 @@ export default class ArmVizSummary extends HTMLElement {
 							.content
 							.cloneNode(true);
 
-			this.shadowRoot
-				.getElementById("summaryContainer")
-				.appendChild(summaryTemplateGroup);
+			summariesElement.appendChild(summaryTemplateGroup);
 		}
 
 		console.info(`\nTODO: compare datasets to identify fastest average, fastest total. Highlight fastest items.`);
+		console.info(`\nTODO: Format time amounts. Add units. [hr, min, sec, ms].`);
 
 		function mapDataToPages ({ metadata, data }) {
 			const defaultPagesAgg = {
@@ -219,6 +223,18 @@ export default class ArmVizSummary extends HTMLElement {
 		}
 	}
 
+	toggleCollapse (event) {
+		// console.log("#toggleCollapse", event);
+		const expandCollapseText = event.target.querySelector("#expandCollapseText");
+		const summaryContainer = this.shadowRoot.getElementById("summaryContainer");
+		summaryContainer.classList.toggle("collapsed");
+		if (summaryContainer.classList.contains("collapsed")) {
+			expandCollapseText.innerHTML = `Expand`;
+		} else {
+			expandCollapseText.innerHTML = `Collapse`;
+		}
+	}
+
 	/**
 	 * Store `data` in proper format including relavent metadata
 	 * @param  {Object} val data and metadata to be stored
@@ -227,7 +243,12 @@ export default class ArmVizSummary extends HTMLElement {
 	 * @return {void}
 	 */
 	set data (val = { metadata: "", data: {} }) {
-		this.__data.push(val);
+		if (this.__data.find(({ metadata }) => metadata === val.metadata)) {
+			console.info(`Not adding duplicate data key (filename already exists)`);
+			return;
+		} else {
+			this.__data.push(val);
+		}
 	}
 
 	/**
@@ -255,9 +276,9 @@ export default class ArmVizSummary extends HTMLElement {
 		<div class="totals--group">
 			<h3>${pageObj.metadata}</h3>
 			<label class="label--totals">onContentLoad:</label>
-			<span class="content--totals">${pageObj.onContentLoad}</span>
+			<span class="content--totals">${converter.convertToUnits(pageObj.onContentLoad)}</span>
 			<label class="label--totals">onLoad:</label>
-			<span class="content--totals">${pageObj.onLoad}</span>
+			<span class="content--totals">${converter.convertToUnits(pageObj.onLoad)}</span>
 		</div>
 		`;
 		return tmpl;
@@ -267,87 +288,85 @@ export default class ArmVizSummary extends HTMLElement {
 		const tmpl = document.createElement("template");
 		tmpl.innerHTML = /* html */`
 		<div class="entry-summary--group">
-			<h3>
-				${entrySummaryObj.metadata}
+			<h3 title="${entrySummaryObj.metadata} (${entrySummaryObj.count})">
+				${entrySummaryObj.metadata.substring(entrySummaryObj.metadata.length -16)}
 				(${entrySummaryObj.count})
-				<span class="display--average">avg</span>
-				<span class="display--max">max</span>
 			</h3>
 
 			<ul class="display--average">
 				<li>
 					<label class="label--summary">time:</label>
-					<span class="val">${entrySummaryObj.time.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.time.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">blocked:</label>
-					<span class="val">${entrySummaryObj.blocked.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.blocked.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">connect:</label>
-					<span class="val">${entrySummaryObj.connect.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.connect.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">dns:</label>
-					<span class="val">${entrySummaryObj.dns.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.dns.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">receive:</label>
-					<span class="val">${entrySummaryObj.receive.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.receive.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">send:</label>
-					<span class="val">${entrySummaryObj.send.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.send.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">ssl:</label>
-					<span class="val">${entrySummaryObj.ssl.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.ssl.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">wait:</label>
-					<span class="val">${entrySummaryObj.wait.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.wait.average)}</span>
 				</li>
 				<li>
 					<label class="label--summary">_blocked_queueing:</label>
-					<span class="val">${entrySummaryObj._blocked_queueing.average}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj._blocked_queueing.average)}</span>
 				</li>
 			</ul>
 			<ul class="display--max">
 				<li>
 					<label class="label--summary">time:</label>
-					<span class="val">${entrySummaryObj.time.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.time.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">blocked:</label>
-					<span class="val">${entrySummaryObj.blocked.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.blocked.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">connect:</label>
-					<span class="val">${entrySummaryObj.connect.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.connect.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">dns:</label>
-					<span class="val">${entrySummaryObj.dns.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.dns.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">receive:</label>
-					<span class="val">${entrySummaryObj.receive.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.receive.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">send:</label>
-					<span class="val">${entrySummaryObj.send.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.send.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">ssl:</label>
-					<span class="val">${entrySummaryObj.ssl.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.ssl.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">wait:</label>
-					<span class="val">${entrySummaryObj.wait.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj.wait.max)}</span>
 				</li>
 				<li>
 					<label class="label--summary">_blocked_queueing:</label>
-					<span class="val">${entrySummaryObj._blocked_queueing.max}</span>
+					<span class="val">${converter.convertToUnits(entrySummaryObj._blocked_queueing.max)}</span>
 				</li>
 			</ul>
 		</div>
@@ -355,13 +374,15 @@ export default class ArmVizSummary extends HTMLElement {
 		return tmpl;
 	}
 
-	static buildTemplate () {
+	static buildTemplate (instance) {
 		const tmpl = document.createElement("template");
 		tmpl.innerHTML = /* html */`
 		<style>
 		:host {
 			display: flex;
 			flex-flow: column wrap;
+			font-size: 0.75em;
+			border: 1px solid #d7d7d7;
 		}
 		:host(.show--summary_average) .display--max,
 		:host(.show--summary_max) .display--average {
@@ -369,7 +390,7 @@ export default class ArmVizSummary extends HTMLElement {
 		}
 		:host(.show--summary_average) .display--average,
 		:host(.show--summary_max) .display--max {
-			display: block;
+			display: inline-block;
 		}
 		#totals {
 			display: flex;
@@ -377,28 +398,51 @@ export default class ArmVizSummary extends HTMLElement {
 			justify-content: space-between;
 		}
 		#totals h3 {
-			display: inline-block;
+			margin: 10px 0 0;
 		}
 		.totals--group {
-
+			flex: 0 1 100%;
 		}
 		.label--totals {
-			font: 1em/1.25em monaco, monospace;
+			font: monaco, monospace;
 			display: inline-block;
 		}
 		.label--summary {
-			font: 1em/1.25em monaco, monospace;
+			font: monaco, monospace;
 			display: inline-block;
 		}
 		.content--totals {
 			font-weight: bold;
 			display: inline-block;
 		}
+		#summaryContainer {
+			padding: 10px;
+			transition: padding, max-height, 0.5s;
+			max-height: 1000px;
+			overflow-y: auto;
+		}
+		#summaryContainer.collapsed {
+			padding: 0 10px;
+			transition: padding, max-height, 0.5s;
+			max-height: 0;
+			overflow: hidden;
+		}
+		#summaries {
+			display: flex;
+		}
 		</style>
+		<button id="toggleCollapseBtn">
+			Summary -
+			<span id="expandCollapseText">Collapse</span>
+			<span id="longestTime"></span>
+		</button>
 		<div id="summaryContainer">
 			<label for="toggleSummaryDisplay">Toggle display</label>
 			<input id="toggleSummaryDisplay" title="Toggle display" type="checkbox" checked />
+			<span class="display--average">avg</span>
+			<span class="display--max">max</span>
 			<div id="totals"></div>
+			<div id="summaries"></div>
 		</div>
 		`;
 		return tmpl;

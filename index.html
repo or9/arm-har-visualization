@@ -2,6 +2,10 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>HAR Visualization Tool</title>
+	<link rel="apple-touch-icon" sizes="180x180" href="./favicon/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="./favicon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="./favicon/favicon-16x16.png">
+	<link rel="manifest" href="/favicon/site.webmanifest">
 	<script type="module" src="./arm-row-dropzone.element.mjs"></script>
 
 	<!-- <script src="./lib/chart.js/dist/Chart.min.js"></script> -->
@@ -119,6 +123,9 @@
 			max-height: 1000px;
 			transition: max-height, 0.2s;
 			overflow: hidden;
+			display: flex;
+			flex-flow: row wrap;
+			justify-content: space-between;
 		}
 		header.collapsed {
 			max-height: 50px;
@@ -162,11 +169,14 @@
 			font-weight: normal;
 			display: inline-block;
 			width: auto;
-			margin: 10px 0 0;
+			margin: 0px 0 0;
 		}
 		header > nav {
 			display: inline-block;
 			width: auto;
+		}
+		header > p {
+			margin-bottom: 0;
 		}
 		.more--link {
 			font-size: 0.9em;
